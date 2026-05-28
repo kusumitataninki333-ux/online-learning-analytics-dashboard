@@ -28,13 +28,9 @@ html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
 }
 
-/* MAIN BACKGROUND */
-
 .stApp {
     background: #f5f7fb;
 }
-
-/* REMOVE SPACE */
 
 .block-container {
     padding-top: 1rem;
@@ -226,17 +222,59 @@ with st.sidebar:
         ["All", "Low Risk", "Medium Risk", "High Risk"]
     )
 
-    st.slider(
+    engagement_range = st.slider(
         "Engagement Score",
         0,
         100,
         (0, 100)
     )
 
-    st.checkbox(
+    include_dropouts = st.checkbox(
         "Include Dropouts",
         value=True
     )
+
+# =========================================================
+# FILTER LOGIC
+# =========================================================
+
+filtered_df = df.copy()
+
+# Course Filter
+if selected_course != "All Courses":
+    filtered_df = filtered_df[
+        filtered_df["course"] == selected_course
+    ]
+
+# Risk Filter
+if selected_risk != "All":
+    filtered_df = filtered_df[
+        filtered_df["risk_level"] == selected_risk
+    ]
+
+# Engagement Score Filter
+filtered_df = filtered_df[
+    (
+        filtered_df["engagement_score"]
+        >= engagement_range[0]
+    )
+    &
+    (
+        filtered_df["engagement_score"]
+        <= engagement_range[1]
+    )
+]
+
+# Dropout Filter
+if not include_dropouts:
+    filtered_df = filtered_df[
+        filtered_df["dropped_out"] == False
+    ]
+
+# Empty Check
+if filtered_df.empty:
+    st.warning("No data available for selected filters.")
+    st.stop()
 
 # =========================================================
 # HERO SECTION
@@ -292,13 +330,12 @@ font-size:24px;
 margin-top:18px;
 font-weight:800;
 letter-spacing:0.5px;
-color:#0EA5E9;
-opacity:1;
-visibility:visible;
+color:#000000;
 display:block;
-text-shadow:1px 1px 2px rgba(0,0,0,0.15);
 ">
+
 AI-Powered Online Learning Analytics Dashboard
+
 </p>
 
 </div>
@@ -336,7 +373,7 @@ with col1:
     </div>
 
     <div class="kpi-number" style="color:#2563eb;">
-    {len(df)}
+    {len(filtered_df)}
     </div>
 
     <div class="kpi-sub">
@@ -348,6 +385,8 @@ with col1:
 
 with col2:
 
+    avg_engagement = round(filtered_df['engagement_score'].mean(), 1)
+
     st.markdown(f"""
     <div class="kpi-card">
 
@@ -358,7 +397,7 @@ with col2:
     </div>
 
     <div class="kpi-number" style="color:#7c3aed;">
-    {round(df['engagement_score'].mean(),1)}
+    {avg_engagement}
     </div>
 
     <div class="kpi-sub">
@@ -370,6 +409,8 @@ with col2:
 
 with col3:
 
+    avg_completion = round(filtered_df['completion_pct'].mean(), 1)
+
     st.markdown(f"""
     <div class="kpi-card">
 
@@ -380,7 +421,7 @@ with col3:
     </div>
 
     <div class="kpi-number" style="color:#16a34a;">
-    {round(df['completion_pct'].mean(),1)}%
+    {avg_completion}%
     </div>
 
     <div class="kpi-sub">
@@ -392,6 +433,8 @@ with col3:
 
 with col4:
 
+    dropout_count = filtered_df['dropped_out'].sum()
+
     st.markdown(f"""
     <div class="kpi-card">
 
@@ -402,7 +445,7 @@ with col4:
     </div>
 
     <div class="kpi-number" style="color:#dc2626;">
-    {df['dropped_out'].sum()}
+    {dropout_count}
     </div>
 
     <div class="kpi-sub">
@@ -439,7 +482,7 @@ with tab1:
         st.subheader("Engagement by Course")
 
         avg = (
-            df.groupby("course")["engagement_score"]
+            filtered_df.groupby("course")["engagement_score"]
             .mean()
             .reset_index()
         )
@@ -463,7 +506,7 @@ with tab1:
         st.subheader("Risk Distribution")
 
         risk = (
-            df["risk_level"]
+            filtered_df["risk_level"]
             .value_counts()
             .reset_index()
         )
@@ -492,7 +535,7 @@ with tab2:
     st.subheader("Recent Students")
 
     st.dataframe(
-        df.head(10),
+        filtered_df.head(10),
         use_container_width=True
     )
 
@@ -538,3 +581,8 @@ st.markdown("""
 
 </div>
 """, unsafe_allow_html=True)
+   
+
+   
+  
+    
