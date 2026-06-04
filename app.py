@@ -11,6 +11,12 @@ st.set_page_config(
     page_icon="🎓", layout="wide",
     initial_sidebar_state="expanded"
 )
+APP_PASSWORD = "kusu@123"
+
+password = st.text_input(
+    "🔒 Enter Dashboard Password",
+    type="password"
+)
 
 # ══════════════════════════════════════════════════════════════
 # CSS — DARK GLASSMORPHISM + ANIMATIONS
